@@ -165,9 +165,35 @@ func (s *OrderProcessingService) AddProductInCartByUserId(c *gin.Context) {
 	fmt.Println(string(tmp))
 
 	orders, err := s.OrderService.GetAllByUserId(c, input.UserID)
-	if err != nil || len(orders) == 0 {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "there are no cart for such user_id"})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err})
 	}
+
+	tmp, _ = json.Marshal(orders)
+	fmt.Println(string(tmp))
+
+	var cartID int
+
+	if len(orders) == 0 || orders == nil {
+		id, err := s.OrderService.Create(c, order.OrderRow{
+			UserID: input.UserID,
+			Status: "Created",
+		})
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err})
+		}
+		cartID = id
+	}
+
+	fmt.Println("cartID = ", cartID)
+
+	orders, err = s.OrderService.GetAllByUserId(c, input.UserID)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err})
+	}
+
+	tmp, _ = json.Marshal(orders)
+	fmt.Println(string(tmp))
 
 	cart := orders[len(orders)-1]
 	_, err = s.ProductOrderService.Create(c, product_order.ProductOrder{
