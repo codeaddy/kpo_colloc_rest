@@ -4,6 +4,8 @@ import (
 	"colloc_rest/internal/app/pkg/order"
 	"colloc_rest/internal/app/pkg/product"
 	"colloc_rest/internal/app/pkg/product_order"
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -119,10 +121,10 @@ func (s *OrderProcessingService) GetProducts(c *gin.Context) {
 }
 
 type addProductInput struct {
-	Name        string `db:"name"`
-	Description string `db:"description"`
-	Price       int    `db:"price"`
-	Quantity    int    `db:"quantity"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Price       int    `json:"price"`
+	Quantity    int    `json:"quantity"`
 }
 
 func (s *OrderProcessingService) AddProduct(c *gin.Context) {
@@ -144,4 +146,78 @@ func (s *OrderProcessingService) AddProduct(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusOK, id)
+}
+
+type addProductInCartByUserIdInput struct {
+	UserID    int `json:"user_id"`
+	ProductID int `json:"product_id"`
+	Quantity  int `json:"quantity"`
+}
+
+func (s *OrderProcessingService) AddProductInCartByUserId(c *gin.Context) {
+	var input addProductInCartByUserIdInput
+	if err := c.BindJSON(&input); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "error when unmarshalling input"})
+		return
+	}
+
+	tmp, _ := json.Marshal(input)
+	fmt.Println(string(tmp))
+
+	orders, err := s.OrderService.GetAllByUserId(c, input.UserID)
+	if err != nil || len(orders) == 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "there are no cart for such user_id"})
+	}
+
+	cart := orders[len(orders)-1]
+	_, err = s.ProductOrderService.Create(c, product_order.ProductOrder{
+		ProductID: input.ProductID,
+		OrderID:   cart.ID,
+		Quantity:  input.Quantity,
+	})
+
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err})
+	}
+
+	c.IndentedJSON(http.StatusOK, "successfully added")
+}
+
+type addCartByUserIdInput struct {
+	UserID int `json:"user_id"`
+}
+
+func (s *OrderProcessingService) AddCartByUserId(c *gin.Context) {
+	var input addCartByUserIdInput
+	if err := c.BindJSON(&input); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "error when unmarshalling input"})
+		return
+	}
+
+	orders, err := s.OrderService.GetAllByUserId(c, input.UserID)
+	if err != nil || len(orders) == 0 {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "there are no cart for such user_id"})
+	}
+
+	c.IndentedJSON(http.StatusOK, "successfully created")
+}
+
+type getOrderByIdInput struct {
+	OrderID int `json:"user_id"`
+}
+
+func (s *OrderProcessingService) GetOrderById(c *gin.Context) {
+	var input getOrderByIdInput
+	if err := c.BindJSON(&input); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "error when unmarshalling input"})
+		return
+	}
+
+	o, err := s.OrderService.GetById(c, input.OrderID)
+
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "there are no cart for such user_id"})
+	}
+
+	c.IndentedJSON(http.StatusOK, o)
 }

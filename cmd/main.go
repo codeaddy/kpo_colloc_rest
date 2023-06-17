@@ -12,8 +12,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 	"net/http"
 )
 
@@ -50,6 +48,8 @@ func main() {
 	}
 	defer database.GetPool(ctx).Close()
 
+	fmt.Println("service started")
+
 	productRepo := postgresql.NewProduct(database)
 	orderRepo := pgorder.NewOrder(database)
 	productOrderRepo := pgproductorder.NewProductOrder(database)
@@ -60,11 +60,13 @@ func main() {
 
 	router.Use(CORSMiddleware())
 
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
 	router.GET("/products", orderProcessingService.GetProducts)
 	router.GET("/cart", orderProcessingService.GetCartByUserId)
-	//router.GET("/orders", orderProcessingService.GetOrderById)
+	router.GET("/orders", orderProcessingService.GetOrderById)
+
+	router.POST("/add-product", orderProcessingService.AddProduct)
+	router.POST("/cart", orderProcessingService.AddProductInCartByUserId)
+	router.POST("/orders", orderProcessingService.AddCartByUserId)
 
 	router.Run(":8080")
 }

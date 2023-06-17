@@ -7,7 +7,7 @@ INTERNAL_PKG_PATH=$(CURDIR)/internal/app/pkg
 .PHONY: compose-up
 compose-up:
 	docker-compose build
-	docker-compose up -d postgres
+	docker-compose up -d api
 
 .PHONY: compose-rm
 compose-rm:
