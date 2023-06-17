@@ -18,8 +18,8 @@ func NewDB(ctx context.Context) (*Database, error) {
 }
 
 func generateDsn() string {
-	//return fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=disable",
-	//	config.User, config.Password, config.Host, config.Dbname)
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		config.Host, config.Port, config.User, config.Password, config.Dbname)
+	return fmt.Sprintf("postgresql://%s:%s@%s/%s?sslmode=disable",
+		config.User, config.Password, config.Host, config.Dbname)
+	//return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+	//	config.Host, config.Port, config.User, config.Password, config.Dbname)
 }

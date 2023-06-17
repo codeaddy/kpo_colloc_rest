@@ -8,5 +8,22 @@ services:
     container_name: 'postgresql-container'
     volumes:
       - ./postgresql/data:/var/lib/postgresql/data # том для того, чтобы при перезапуске контейнера все данные сохранялись
+    networks:
+      - common
     ports:
       - 5432:5432
+  api:
+    build:
+      context: .
+      dockerfile: api/build/Dockerfile
+    restart: always
+    depends_on:
+      - postgres
+    networks:
+      - common
+    ports:
+      - 8000:8080
+
+networks:
+  common:
+    driver: bridge
